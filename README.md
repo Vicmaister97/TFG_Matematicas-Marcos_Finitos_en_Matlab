@@ -14,3 +14,5 @@ El presente repositorio contiene todo el código elaborado en Matlab para mi TFG
 -   El fichero "image_reconstruction.m" implementa como función la recuperación de una imagen original en RGB, que convierte a grayscale y simula la pérdida de píxeles aleatorios.
 -       Un ejemplo de ejecución sería: >> image_reconstruction('images/original/', 'tries');
 -       En este caso, guarda todas las imagenes resultantes en el directorio "images/reconstructed/".
+
+Tanto en "images/bandlimited/examples" como en "images/reconstructed/examples" se encuentran algunos ejemplos de ejecuciones realizadas. Se insta al lector a verlas.
