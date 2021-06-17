@@ -1,14 +1,13 @@
 %% Ejemplo de cómo trabajar con imágenes en Matlab: https://es.mathworks.com/help/images/ref/mat2gray.html
 
-%% Input: Nombre de la imagen (en la carpeta images/original) a muestrear con Fourier
 %%
 %%  NOTA: IMAGEN en JPG!!!!!
 %%
-%  NOTA2: FALTA COMPROBAR si YA EXISTE la imagen en GRAYSCALE o la imagen RESULTADO para evitar reescribir!!
+%%  NOTA2: FALTA COMPROBAR si YA EXISTE la imagen en GRAYSCALE o la imagen RESULTADO para evitar reescribir!!
 
-%% INPUT: 
-        % nombre_file = String con el nombre de la imagen a muestrear (en images/original)
-                % O en images/reconstructed si es modo RECONSTRUCT
+%% INPUT:
+        % origen = String con la dirección/carpeta de la que se lee la imagen
+        % nombre_file = String con el nombre de la imagen a muestrear
         % num_elems_Fourier = Número que coefs de Fourier con los que nos quedamos
         % simple_or_reconstruct:
         %      Vale 0 si queremos la ejecución simple -- Muestrea y guarda
@@ -18,9 +17,8 @@
 function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_file, num_elems_Fourier, simple_or_reconstruct)
     
     tic;    % Comenzamos a medir el tiempo
-    F = []; %% OUTPUT, F = cjto de coefs de Fourier que limitan la imagen
-    %index = 1;
-    %iterss = 0;
+    %% OUTPUT: F = cjto de coefs de Fourier que limitan la imagen
+    F = []; 
     
     % Variables para leer la imagen original y guardar la bandlimited
     %origen = 'images/original/';
@@ -29,19 +27,17 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
     prev = strcat(nombre_file, extension);
     tit_read = strcat(origen, prev);
     
-    
-    %% También afecta a la hora de limitar la imagen!
     if simple_or_reconstruct == 0       %% Ejecución SIMPLE
         destino = 'images/bandlimited/';
         
-        % Empezamos pasando una imagen como input y obtenemos como output la imagen
+        % Empezamos pasando una imagen como input y obtenemos la imagen
         % como matriz
         % Primero obtenemos la imagen en RGB
         RGB = imread(tit_read);
         %figure (1);
         %imshow(RGB);
 
-        % La convertimos en una imagen de grises y la mostramos
+        % La convertimos en una imagen de grises
         I = rgb2gray(RGB);
         %figure (22);
         %imshow(I);
@@ -57,11 +53,10 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
         destino = 'images/reconstructed/';
         recons = strcat(origen, nombre_file);
         tit = strcat(recons, extension);
-        %% Cogemos la imagen con missing pixels en RGB
-        % Empezamos pasando una imagen como input y obtenemos como output la imagen
+        % Empezamos pasando una imagen como input y obtenemos la imagen
         % como matriz
         
-        %V1!!!!!!!!!!!
+        % Cogemos la imagen con missing pixels en RGB
         %{
         % Primero obtenemos la imagen en RGB
         RGB = imread(tit);
@@ -73,7 +68,7 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
         imshow(I);
         %}
         
-        %V2!!!!!!!!!!!!!!!!!!!
+        % Cogemos la imagen con missing pixels ya en grayscale
         I = imread(tit);
         %imshow(I);
 
@@ -82,48 +77,39 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
     % Una vez tenemos la imagen en grayscale (I), la imagen es una matriz donde
     % cada elemento representa un pixel, que solo tiene 1 valor intensidad
 
-    % Realizamos la transformada de fourier discreta sobre la matriz de la
+    % Realizamos la transformada de Fourier discreta sobre la matriz de la
     % imagen
-
+    
+    %% OUTPUT: I_Fourier=Matriz con la DFT de la imagen, que modificamos 
+    %%  y de la cual dejamos solo los coeficientes mayores, realizando la
+    %%  compresión.
     I_Fourier = fft2(I);
+    
     %figure (3);
     %imshow(abs(I_Fourier));
     % Vemos su valor min y max
-    min_Fourier = min(abs(I_Fourier(:)));
-    max_Fourier = max(abs(I_Fourier(:)));
+    %min_Fourier = min(abs(I_Fourier(:)));
+    %max_Fourier = max(abs(I_Fourier(:)));
 
     %media_Fourier = floor(abs(mean2(I_Fourier)))
 
-    %% COMPARAR EN VALOR ABSOLUTO
-    % Probar a restar a la matriz original por la media
-    %% LUEGO SUMARLE LA MEDIA!!!
+    %% COMPARAR EN VALOR ABSOLUTO (son complejos)
     tam = size(I_Fourier);
     M = tam(1);
     N = tam(2);
     
-    I_Fourier_enfila = zeros(M*N,1);
+    %% OUTPUT: I_Fourier_enfila = Vector que contiene la imagen en la
+    %%  base de Fourier tras la compresión en una fila, para poder 
+    %%  aplicar sampling_reconstruction
+    I_Fourier_enfila = zeros(M*N,1);    
     
-    %I_Fourier_reescalada = I_Fourier;
-
-    % Imagen ya comprimida con los coefs de Fourier más altos
-    %I_Fourier_reescalada = I_Fourier;
-    % Matriz de la imagen que utilizamos para ORDENAR los coefs de mayor a
-    % menor
-    
-    %% Ordenamos por columnas la matriz de forma ASCENDENTE
-        % Así, leyendo la primera fila tenemos los dim_fila elementos MAS
-        % GRANDES de la matriz!!!!
-    %I_Fourier_ordenada = sort(abs(I_Fourier), 1, 'descend');    % Lo hacemos con abs(I_Fourier)
-    %I_Fourier_ordenada = sort(abs(I_Fourier_ordenada), 2, 'descend');    % Lo hacemos con abs(I_Fourier)
-    
-    
-    %% AQUÍ VIENE LA "COMPRESIÓN"!!
+    %% AQUÍ VIENE LA COMPRESIÓN!!
     %% Hacemos una lista con los coeficientes MAYORES
         % Sustituimos los coeficientes que no estén en esta lista
         %   por 0!!!   
     max_elems = {};
     %% Ahora nos vamos a quedar en max_elems con los num_elems_Fourier coeficientes
-        %% más grandes!!
+    %%  más grandes!!
     c=0;
     start=0;
     start2=0;
@@ -132,7 +118,7 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
             %% Cogemos los primeros num_elems_Fourier para max_elems
             if c<num_elems_Fourier
                 c = c+1;
-                max_elems{c} = [abs(I_Fourier(t,tt)), t, tt];       % Guardamos tbien la posición del coef
+                max_elems{c} = [abs(I_Fourier(t,tt)), t, tt];       % Guardamos también la posición del coef
             else
                 start=t;
                 start2=tt;
@@ -150,29 +136,22 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
         return
     end
     
-    %fprintf('PRIMEROOO\n\n');
-    %start
-    %start2
-    %length(max_elems)
-    
     %% Aquí tenemos en max_elems los primeros num_elems_Fourier coefs de I_Fourier
     %% Seguimos recorriendo la matriz desde (t,tt)
-    %start = t
-    %start2 = tt
+
     %% Vemos cuál es el mínimo de los coefs de max_elems
+        %% ASÍ, SOLO COMPARAMOS SI EL COEFICIENTE QUE LEEMOS ES > minimo 
+        %% PARA GUARDARLO EN max_elems
     minimo = [10000000000, -1,-1];
     for ttt=1:num_elems_Fourier
         if (max_elems{ttt}(1) < minimo(1))    % Nos quedamos con el coef mínimo
             minimo = max_elems{ttt};
-            %fprintf('CAMBIO MIN!!!!!');
         end
     end
-    %minimo
     
     %   Seguimos recorriendo el resto de la matriz desde start y start2
     for t=1:M
         for tt=1:N
-            %% MEJORAR
             if t<start
                 continue        % Ya lo hemos leido seguro al no haber llegado a la linea start
             else
@@ -205,7 +184,6 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
                 for ttt=1:num_elems_Fourier
                     if (max_elems{ttt}(1) < minimo(1))    % Nos quedamos con el coef mínimo
                         minimo = max_elems{ttt};
-                        %fprintf('CAMBIO MIN!!!!!');
                     end
                 end
                 
@@ -213,10 +191,6 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
             
         end
     end
-    %fprintf('SEGUNDOOOOOOOOOOOOOOOOOO\n\n');
-    %minimo
-    %length(max_elems)
-
     
     % Ahora, recorremos la matriz I_Fourier y vamos poniendo a 0
     % todos los coeficientes que NO estén en max_elems:
@@ -261,16 +235,9 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
         
     end
     
-    %fprintf('TERCEROOOOOOOOOOOOOOOOOOOOOOOO\n\n');
-    %I_Fourier;
-    %length(F)
-    %length(max_elems)
-    % Ordenamos los índices de Fourier FALTA!!!!!!!!!!!!!!!!!!!!!!!!
-    
     %% YA CON ESTO, ESTAMOS COGIENDO LOS coeficientes de Fourier + GRANDES (y que mejor aproximan la imagen)
 
     pixeles_total = M*N;
-    %pixeles_reescalada = 0.1*pixeles_total;
 
     % Escribimos el porcentaje de compresión alcanzado
     compression = round(pixeles_total/num_elems_Fourier);
@@ -279,10 +246,9 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
     %% A VECES DEVUELVE EN COMPLEJOS AUN!!! Cuando NO es simétrica
     I_recuperada = ifft2(I_Fourier);
     if isreal(I_recuperada)
-        % Si es real, es correcta
+        % Si es real, es simétrica
     else
-        %% FALLÓ ifft2, posiblemente debido a que I_Fourier_reescalada
-        %    NO era simétrica
+        %    I_Fourier_reescalada NO era simétrica
         %fprintf("I_recuperada NO es real, aproximamos con abs\n\n");
         I_recuperada = abs(I_recuperada);   
     end
@@ -292,17 +258,6 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
 
     %% VER ERROR RESPECTO DE I!!!
 
-    % Convierta la matriz en una imagen. Mostrar los valores máximo y mínimo de la imagen.
-    %K = uint8(mat2gray(ent_recuperada));
-    %figure(3)
-    %imshow(K)
-    %min_recons = min(K(:));
-    %max_recons = max(K(:));
-    %% OJO, todos los valores están en el intervalo [0,1]
-    %figure(4);
-    %imagesc(K);
-    %imshow(K);
-
     comp = sprintf('_ratio_%d', compression);
     nombre_file_dest = strcat(nombre_file, comp)
     extension = '.jpg';
@@ -310,9 +265,7 @@ function [F, I_Fourier, I_Fourier_enfila] = image_compression(origen, nombre_fil
     tit_write = strcat(destino, prev);
     
     imwrite(ent_recuperada,tit_write);
-    %% AJUSTAR ANCHO Y ALTO A LA IMAGEN ORIGINAL
 
     toc;        % Paramos de medir el tiempo
-
 end
 
