@@ -17,3 +17,5 @@ El presente repositorio contiene todo el código elaborado en Matlab para mi TFG
 
 
 -   En los directorios "images/bandlimited/examples" y "images/reconstructed/examples" se encuentran algunos ejemplos de ejecuciones realizadas. Se insta al lector a verlas.
+
+NOTA: Este proyecto tiene licencia con las condiciones de la licencia de "GNU General Public License v3.0". Ver detalles en el archivo LICENSE
